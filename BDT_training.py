@@ -62,10 +62,12 @@ def build_dataframe(filename, label):
 
         "label": label
     })
-
     return df
 
+print('Preparing signal dataframe...')
 df_sig = build_dataframe("signal.root", 1)
+
+print('Preparing background dataframe...')
 df_bkg = build_dataframe("bkg.root", 0)
 
 df = pd.concat([df_sig, df_bkg], ignore_index=True)
@@ -85,6 +87,7 @@ bdt = XGBClassifier(
     eval_metric='logloss'
 )
 
+print('Training and testing...')
 bdt.fit(X_train, y_train)
 
 y_pred = bdt.predict(X_test)
@@ -94,24 +97,37 @@ print("Accuracy:", accuracy_score(y_test, y_pred))
 print("ROC AUC:", roc_auc_score(y_test, y_pred_prob))
 
 
-fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
 
-plt.style.use(mplhep.style.CMS)
-plt.figure(figsize=(6,6))
-plt.plot(fpr, tpr, label=f'BDT (AUC = {roc_auc_score(y_test, y_pred_prob):.3f})')
-plt.plot([0,1],[0,1],'k--', alpha=0.5)
-plt.xlabel("False Positive Rate")
-plt.ylabel("True Positive Rate")
-plt.title("ROC Curve")
-plt.legend()
-plt.savefig('ROC_curve.png')
+print('Plotting...')
+fpr, tpr, thresholds = roc_curve(y_test, y_pred_prob)
+fig, ax = plt.subplots(figsize=(6,6), constrained_layout=True)
+
+ax.plot(fpr, tpr, label=f'BDT (AUC = {roc_auc_score(y_test, y_pred_prob):.3f})')
+ax.plot([0,1],[0,1],'k--', alpha=0.5)
+
+ax.set_xlabel("False Positive Rate")
+ax.set_ylabel("True Positive Rate")
+ax.set_title("ROC Curve")
+ax.legend(loc="lower right")
+
+fig.savefig('curves/ROC_curve.png', dpi=150, bbox_inches="tight")
+plt.close(fig)
+
 
 importances = bdt.feature_importances_
 feat_names = X.columns
 
-plt.figure(figsize=(8,6))
-plt.barh(feat_names, importances)
-plt.xlabel("Feature importance")
-plt.ylabel("Variable")
-plt.title("XGBoost Feature Importance")
-plt.savefig('Feature_Importance.png')
+fig, ax = plt.subplots(figsize=(8,10), constrained_layout=True)
+
+ax.barh(feat_names, importances)
+ax.set_xlabel("Feature importance")
+ax.set_ylabel("Variable")
+ax.set_title("XGBoost Feature Importance")
+
+ax.tick_params(axis='y', labelsize=8)
+ax.tick_params(axis='x', labelsize=9)
+
+ax.invert_yaxis()
+
+fig.savefig('curves/Feature_Importance.png', dpi=150, bbox_inches="tight")
+plt.close(fig)

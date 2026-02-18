@@ -350,23 +350,25 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
           GlobalPoint vtxPos = fittedVertex.position();
           float lxy = std::hypot(vtxPos.x(), vtxPos.y());
 
-          SV_lxy_Vtx.push_back(lxy);
-          SV_prob_Vtx.push_back(vtxProb);
-          SV_chi2_Vtx.push_back(fittedVertex.totalChiSquared()); 
+          SV_lxy_NoVtx.push_back(lxy);
+          SV_prob_NoVtx.push_back(vtxProb);
+          SV_chi2_NoVtx.push_back(fittedVertex.totalChiSquared()); 
 
           if (globalVertex) {
-            SV_global_Vtx.push_back(true);
+            SV_global_NoVtx.push_back(true);
             SV_tracker_Vtx.push_back(false);
           }
           else {
-            SV_global_Vtx.push_back(false);
-            SV_tracker_Vtx.push_back(true);
+            SV_global_NoVtx.push_back(false);
+            SV_tracker_NoVtx.push_back(true);
           }
         }
       }
     }
   }
-  tout->Fill();
+  if (!SV_lxy_Vtx.empty() || !SV_lxy_NoVtx.empty()) {
+    tout->Fill();
+  }
 }
 
 
