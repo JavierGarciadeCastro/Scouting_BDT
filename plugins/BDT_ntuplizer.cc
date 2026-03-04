@@ -85,6 +85,8 @@ class BDT_ntuplizer : public edm::one::EDAnalyzer<> {
     std::vector<float> SV1_xErr_Vtx,  SV2_xErr_Vtx, SV1_yErr_Vtx, SV2_yErr_Vtx, SV1_zErr_Vtx, SV2_zErr_Vtx;
     std::vector<float> SV1_xErr_NoVtx,  SV2_xErr_NoVtx, SV1_yErr_NoVtx, SV2_yErr_NoVtx, SV1_zErr_NoVtx, SV2_zErr_NoVtx;
     std::vector<bool> SV1_global_NoVtx, SV1_global_Vtx, SV2_global_NoVtx, SV2_global_Vtx;
+    std::vector<bool> SV1_mu1_NoVtx, SV1_mu2_NoVtx, SV2_mu1_NoVtx, SV2_mu2_NoVtx;
+    std::vector<bool> SV1_mu1_Vtx, SV1_mu2_Vtx, SV2_mu1_Vtx, SV2_mu2_Vtx;
 
     // ===================== Scouting muon variables =====================
     std::vector<int> nmu_NoVtx, nmu_Vtx;
@@ -170,6 +172,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     float px;
     float py;
     float pz;
+    int mu_index;
   };
 
   l1GtUtils_->retrieveL1(iEvent, iSetup, algToken_);
@@ -207,9 +210,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   if (!passHLT) return;
 
   std::vector<TaggedTT> allTracksTT_NoVtx;
-  std::vector<TaggedTT> gen_matched_tt_NoVtx;
   std::vector<TaggedTT> allTracksTT_Vtx;
-  std::vector<TaggedTT> gen_matched_tt_Vtx;
 
   SV1_ndof_NoVtx.clear(); SV1_ndof_Vtx.clear();
   SV1_chi2_NoVtx.clear(); SV1_prob_NoVtx.clear(); SV1_lxy_NoVtx.clear();
@@ -227,6 +228,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   SV2_L3D_NoVtx.clear(); SV1_L3D_NoVtx.clear(); SV2_L3D_Vtx.clear(); SV1_L3D_Vtx.clear();
   SV1_xErr_NoVtx.clear(); SV2_xErr_NoVtx.clear(); SV1_yErr_NoVtx.clear(); SV2_yErr_NoVtx.clear(); SV1_zErr_NoVtx.clear(); SV2_zErr_NoVtx.clear(); 
   SV1_xErr_Vtx.clear(); SV2_xErr_Vtx.clear(); SV1_yErr_Vtx.clear(); SV2_yErr_Vtx.clear(); SV1_zErr_Vtx.clear(); SV2_zErr_Vtx.clear(); 
+  SV1_mu1_Vtx.clear(); SV1_mu2_Vtx.clear(); SV2_mu1_Vtx.clear(); SV2_mu2_Vtx.clear(); 
+  SV1_mu1_NoVtx.clear(); SV1_mu2_NoVtx.clear(); SV2_mu1_NoVtx.clear(); SV2_mu2_NoVtx.clear(); 
   
   nmu_NoVtx.clear(); nmu_Vtx.clear();
 
@@ -390,7 +393,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       reco::TrackBase::undefQuality
     );
 
-    allTracksTT_Vtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz});
+    int muIndex = iMu - 1;
+    allTracksTT_Vtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz, muIndex});
   }
   int counter_Vtx = 0;
   unsigned int nTracks_Vtx = allTracksTT_Vtx.size();
@@ -411,7 +415,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
           bool globalVertex = (t1.isGlobal && t2.isGlobal);
           GlobalPoint vtxPos = fittedVertex.position();
 
-          GlobalError vtxErr = fittedVertex.error();
+          GlobalError vtxErr = fittedVertex.vertexState().error();
           float xErr = std::sqrt(vtxErr.cxx());
           float yErr = std::sqrt(vtxErr.cyy());
           float zErr = std::sqrt(vtxErr.czz());
@@ -445,6 +449,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV1_xErr_Vtx.push_back(xErr);
             SV1_yErr_Vtx.push_back(yErr);
             SV1_zErr_Vtx.push_back(zErr);
+            SV1_mu1_Vtx.push_back(t1.mu_index);
+            SV1_mu2_Vtx.push_back(t2.mu_index);
           }
           else if (counter_Vtx == 1){
             counter_Vtx++;
@@ -462,6 +468,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV2_xErr_Vtx.push_back(xErr);
             SV2_yErr_Vtx.push_back(yErr);
             SV2_zErr_Vtx.push_back(zErr);
+            SV2_mu1_Vtx.push_back(t1.mu_index);
+            SV2_mu2_Vtx.push_back(t2.mu_index);
           }
         }
       }
@@ -591,7 +599,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       reco::TrackBase::undefQuality
     );
 
-    allTracksTT_NoVtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz});
+    int muIndex = iMu - 1;
+    allTracksTT_NoVtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz, muIndex});
   }
 
   int counter_NoVtx = 0;
@@ -613,7 +622,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
           bool globalVertex = (t1.isGlobal && t2.isGlobal);
           GlobalPoint vtxPos = fittedVertex.position();
 
-          GlobalError vtxErr = fittedVertex.error();
+          GlobalError vtxErr = fittedVertex.vertexState().error();
           float xErr = std::sqrt(vtxErr.cxx());
           float yErr = std::sqrt(vtxErr.cyy());
           float zErr = std::sqrt(vtxErr.czz());
@@ -647,6 +656,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV1_xErr_NoVtx.push_back(xErr);
             SV1_yErr_NoVtx.push_back(yErr);
             SV1_zErr_NoVtx.push_back(zErr);
+            SV1_mu1_NoVtx.push_back(t1.mu_index);
+            SV1_mu2_NoVtx.push_back(t2.mu_index);
           }
           else if (counter_NoVtx == 1){
             counter_NoVtx++;
@@ -664,6 +675,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV2_xErr_NoVtx.push_back(xErr);
             SV2_yErr_NoVtx.push_back(yErr);
             SV2_zErr_NoVtx.push_back(zErr);
+            SV2_mu1_NoVtx.push_back(t1.mu_index);
+            SV2_mu2_NoVtx.push_back(t2.mu_index);
           }
         }
       }
@@ -697,8 +710,10 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV1_3Dangle_NoVtx", &SV1_3Dangle_NoVtx);
   tout->Branch("SV1_L3D_NoVtx", &SV1_L3D_NoVtx);
   tout->Branch("SV1_xErr_NoVtx", &SV1_xErr_NoVtx);
-  tout->Branch("SV1_yErr_NoVtx", &SV1_xErr_NoVtx);
-  tout->Branch("SV1_zErr_NoVtx", &SV1_xErr_NoVtx);
+  tout->Branch("SV1_yErr_NoVtx", &SV1_yErr_NoVtx);
+  tout->Branch("SV1_zErr_NoVtx", &SV1_zErr_NoVtx);
+  tout->Branch("SV1_mu1_NoVtx", &SV1_mu1_NoVtx);
+  tout->Branch("SV1_mu2_NoVtx", &SV1_mu2_NoVtx);
 
   tout->Branch("SV2_chi2_NoVtx", &SV2_chi2_NoVtx);
   tout->Branch("SV2_prob_NoVtx", &SV2_prob_NoVtx);
@@ -711,8 +726,10 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV2_3Dangle_NoVtx", &SV2_3Dangle_NoVtx);
   tout->Branch("SV2_L3D_NoVtx", &SV2_L3D_NoVtx);
   tout->Branch("SV2_xErr_NoVtx", &SV2_xErr_NoVtx);
-  tout->Branch("SV2_yErr_NoVtx", &SV2_xErr_NoVtx);
-  tout->Branch("SV2_zErr_NoVtx", &SV2_xErr_NoVtx);
+  tout->Branch("SV2_yErr_NoVtx", &SV2_yErr_NoVtx);
+  tout->Branch("SV2_zErr_NoVtx", &SV2_zErr_NoVtx);
+  tout->Branch("SV2_mu1_NoVtx", &SV2_mu1_NoVtx);
+  tout->Branch("SV2_mu2_NoVtx", &SV2_mu2_NoVtx);
 
   // ===================== NoVtx muons =====================
   tout->Branch("nmu_NoVtx", &nmu_NoVtx);
@@ -781,8 +798,10 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV1_3Dangle_Vtx", &SV1_3Dangle_Vtx);
   tout->Branch("SV1_L3D_Vtx", &SV1_L3D_Vtx);
   tout->Branch("SV1_xErr_Vtx", &SV1_xErr_Vtx);
-  tout->Branch("SV1_yErr_Vtx", &SV1_xErr_Vtx);
-  tout->Branch("SV1_zErr_Vtx", &SV1_xErr_Vtx);
+  tout->Branch("SV1_yErr_Vtx", &SV1_yErr_Vtx);
+  tout->Branch("SV1_zErr_Vtx", &SV1_zErr_Vtx);
+  tout->Branch("SV1_mu1_Vtx", &SV1_mu1_Vtx);
+  tout->Branch("SV1_mu2_Vtx", &SV1_mu2_Vtx);
 
   tout->Branch("SV2_chi2_Vtx", &SV2_chi2_Vtx);
   tout->Branch("SV2_prob_Vtx", &SV2_prob_Vtx);
@@ -795,8 +814,10 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV2_3Dangle_Vtx", &SV2_3Dangle_Vtx);
   tout->Branch("SV2_L3D_Vtx", &SV2_L3D_Vtx);
   tout->Branch("SV2_xErr_Vtx", &SV2_xErr_Vtx);
-  tout->Branch("SV2_yErr_Vtx", &SV2_xErr_Vtx);
-  tout->Branch("SV2_zErr_Vtx", &SV2_xErr_Vtx);
+  tout->Branch("SV2_yErr_Vtx", &SV2_yErr_Vtx);
+  tout->Branch("SV2_zErr_Vtx", &SV2_zErr_Vtx);
+  tout->Branch("SV2_mu1_Vtx", &SV2_mu1_Vtx);
+  tout->Branch("SV2_mu2_Vtx", &SV2_mu2_Vtx);
 
   // ===================== Vtx muons =====================
   tout->Branch("nmu_Vtx", &nmu_Vtx);

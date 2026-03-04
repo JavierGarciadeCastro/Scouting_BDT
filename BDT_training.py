@@ -108,6 +108,9 @@ def build_dataframe(filename, label, collection):
             "SV1_xErr_Vtx":  max_or_default(tree["SV1_xErr_Vtx"].array()),
             "SV1_yErr_Vtx":  max_or_default(tree["SV1_yErr_Vtx"].array()),
             "SV1_zErr_Vtx":  max_or_default(tree["SV1_zErr_Vtx"].array()),
+            "SV1_mu1_Vtx":  max_or_default(tree["SV1_mu1_Vtx"].array()),
+            "SV1_mu2_Vtx":  max_or_default(tree["SV1_mu2_Vtx"].array()),
+            
             "SV2_chi2_Vtx": max_or_default(tree["SV2_chi2_Vtx"].array()),
             "SV2_prob_Vtx": max_or_default(tree["SV2_prob_Vtx"].array()),
             "SV2_lxy_Vtx":  max_or_default(tree["SV2_lxy_Vtx"].array()),
@@ -119,6 +122,8 @@ def build_dataframe(filename, label, collection):
             "SV2_xErr_Vtx":  max_or_default(tree["SV2_xErr_Vtx"].array()),
             "SV2_yErr_Vtx":  max_or_default(tree["SV2_yErr_Vtx"].array()),
             "SV2_zErr_Vtx":  max_or_default(tree["SV2_zErr_Vtx"].array()),
+            "SV2_mu1_Vtx":  max_or_default(tree["SV2_mu1_Vtx"].array()),
+            "SV2_mu2_Vtx":  max_or_default(tree["SV2_mu2_Vtx"].array()),
 
             "mu1_pt_Vtx": max_or_default(tree["mu1_pt_Vtx"].array()),
             "mu1_eta_Vtx": max_or_default(tree["mu1_eta_Vtx"].array()),
@@ -171,6 +176,9 @@ def build_dataframe(filename, label, collection):
             "SV1_xErr_NoVtx":  max_or_default(tree["SV1_xErr_NoVtx"].array()),
             "SV1_yErr_NoVtx":  max_or_default(tree["SV1_yErr_NoVtx"].array()),
             "SV1_zErr_NoVtx":  max_or_default(tree["SV1_zErr_NoVtx"].array()),
+            "SV1_mu1_NoVtx":  max_or_default(tree["SV1_mu1_NoVtx"].array()),
+            "SV1_mu2_NoVtx":  max_or_default(tree["SV1_mu2_NoVtx"].array()),
+
             "SV2_chi2_NoVtx": max_or_default(tree["SV2_chi2_NoVtx"].array()),
             "SV2_prob_NoVtx": max_or_default(tree["SV2_prob_NoVtx"].array()),
             "SV2_lxy_NoVtx":  max_or_default(tree["SV2_lxy_NoVtx"].array()),
@@ -182,6 +190,8 @@ def build_dataframe(filename, label, collection):
             "SV2_xErr_NoVtx":  max_or_default(tree["SV2_xErr_NoVtx"].array()),
             "SV2_yErr_NoVtx":  max_or_default(tree["SV2_yErr_NoVtx"].array()),
             "SV2_zErr_NoVtx":  max_or_default(tree["SV2_zErr_NoVtx"].array()),
+            "SV2_mu1_NoVtx":  max_or_default(tree["SV2_mu1_NoVtx"].array()),
+            "SV2_mu2_NoVtx":  max_or_default(tree["SV2_mu2_NoVtx"].array()),
 
             "mu1_pt_NoVtx": max_or_default(tree["mu1_pt_NoVtx"].array()),
             "mu1_eta_NoVtx": max_or_default(tree["mu1_eta_NoVtx"].array()),

@@ -109,6 +109,9 @@ def build_dataframe(filename, label, collection):
             "SV1_xErr_Vtx":  max_or_default(tree["SV1_xErr_Vtx"].array()),
             "SV1_yErr_Vtx":  max_or_default(tree["SV1_yErr_Vtx"].array()),
             "SV1_zErr_Vtx":  max_or_default(tree["SV1_zErr_Vtx"].array()),
+            "SV1_mu1_Vtx":  max_or_default(tree["SV1_mu1_Vtx"].array()),
+            "SV1_mu2_Vtx":  max_or_default(tree["SV1_mu2_Vtx"].array()),
+            
             "SV2_chi2_Vtx": max_or_default(tree["SV2_chi2_Vtx"].array()),
             "SV2_prob_Vtx": max_or_default(tree["SV2_prob_Vtx"].array()),
             "SV2_lxy_Vtx":  max_or_default(tree["SV2_lxy_Vtx"].array()),
@@ -120,6 +123,8 @@ def build_dataframe(filename, label, collection):
             "SV2_xErr_Vtx":  max_or_default(tree["SV2_xErr_Vtx"].array()),
             "SV2_yErr_Vtx":  max_or_default(tree["SV2_yErr_Vtx"].array()),
             "SV2_zErr_Vtx":  max_or_default(tree["SV2_zErr_Vtx"].array()),
+            "SV2_mu1_Vtx":  max_or_default(tree["SV2_mu1_Vtx"].array()),
+            "SV2_mu2_Vtx":  max_or_default(tree["SV2_mu2_Vtx"].array()),
 
             "mu1_pt_Vtx": max_or_default(tree["mu1_pt_Vtx"].array()),
             "mu1_eta_Vtx": max_or_default(tree["mu1_eta_Vtx"].array()),
@@ -157,69 +162,6 @@ def build_dataframe(filename, label, collection):
             "label": label
         })
         return df_Vtx
-
-    elif collection == 'NoVtx':
-        df_NoVtx = pd.DataFrame({
-            # ================= NoVtx =================
-            "SV1_chi2_NoVtx": max_or_default(tree["SV1_chi2_NoVtx"].array()),
-            "SV1_prob_NoVtx": max_or_default(tree["SV1_prob_NoVtx"].array()),
-            "SV1_lxy_NoVtx":  max_or_default(tree["SV1_lxy_NoVtx"].array()),
-            "SV1_global_NoVtx":  max_or_default(tree["SV1_global_NoVtx"].array()),
-            "SV1_dphi_NoVtx":  max_or_default(tree["SV1_dphi_NoVtx"].array()),
-            "SV1_pt_NoVtx":  max_or_default(tree["SV1_pt_NoVtx"].array()),
-            "SV1_3Dangle_NoVtx":  max_or_default(tree["SV1_3Dangle_NoVtx"].array()),
-            "SV1_L3D_NoVtx":  max_or_default(tree["SV1_L3D_NoVtx"].array()),
-            "SV1_xErr_NoVtx":  max_or_default(tree["SV1_xErr_NoVtx"].array()),
-            "SV1_yErr_NoVtx":  max_or_default(tree["SV1_yErr_NoVtx"].array()),
-            "SV1_zErr_NoVtx":  max_or_default(tree["SV1_zErr_NoVtx"].array()),
-            "SV2_chi2_NoVtx": max_or_default(tree["SV2_chi2_NoVtx"].array()),
-            "SV2_prob_NoVtx": max_or_default(tree["SV2_prob_NoVtx"].array()),
-            "SV2_lxy_NoVtx":  max_or_default(tree["SV2_lxy_NoVtx"].array()),
-            "SV2_global_NoVtx":  max_or_default(tree["SV2_global_NoVtx"].array()),
-            "SV2_dphi_NoVtx":  max_or_default(tree["SV2_dphi_NoVtx"].array()),
-            "SV2_pt_NoVtx":  max_or_default(tree["SV2_pt_NoVtx"].array()),
-            "SV2_3Dangle_NoVtx":  max_or_default(tree["SV2_3Dangle_NoVtx"].array()),
-            "SV2_L3D_NoVtx":  max_or_default(tree["SV2_L3D_NoVtx"].array()),
-            "SV2_xErr_NoVtx":  max_or_default(tree["SV2_xErr_NoVtx"].array()),
-            "SV2_yErr_NoVtx":  max_or_default(tree["SV2_yErr_NoVtx"].array()),
-            "SV2_zErr_NoVtx":  max_or_default(tree["SV2_zErr_NoVtx"].array()),
-
-            "mu1_pt_NoVtx": max_or_default(tree["mu1_pt_NoVtx"].array()),
-            "mu1_eta_NoVtx": max_or_default(tree["mu1_eta_NoVtx"].array()),
-            "mu1_phi_NoVtx": max_or_default(tree["mu1_phi_NoVtx"].array()),
-            "mu1_isGlobal_NoVtx": max_or_default(tree["mu1_isGlobal_NoVtx"].array()),
-            "mu1_isTracker_NoVtx": max_or_default(tree["mu1_isTracker_NoVtx"].array()),
-            "mu1_chi2Ndof_NoVtx": max_or_default(tree["mu1_chi2Ndof_NoVtx"].array()),
-            "mu1_trk_dxy_NoVtx": max_or_default(tree["mu1_trk_dxy_NoVtx"].array()),
-            "mu1_trk_dxyError_NoVtx": max_or_default(tree["mu1_trk_dxyError_NoVtx"].array()),
-            "mu2_pt_NoVtx": max_or_default(tree["mu2_pt_NoVtx"].array()),
-            "mu2_eta_NoVtx": max_or_default(tree["mu2_eta_NoVtx"].array()),
-            "mu2_phi_NoVtx": max_or_default(tree["mu2_phi_NoVtx"].array()),
-            "mu2_isGlobal_NoVtx": max_or_default(tree["mu2_isGlobal_NoVtx"].array()),
-            "mu2_isTracker_NoVtx": max_or_default(tree["mu2_isTracker_NoVtx"].array()),
-            "mu2_chi2Ndof_NoVtx": max_or_default(tree["mu2_chi2Ndof_NoVtx"].array()),
-            "mu2_trk_dxy_NoVtx": max_or_default(tree["mu2_trk_dxy_NoVtx"].array()),
-            "mu2_trk_dxyError_NoVtx": max_or_default(tree["mu2_trk_dxyError_NoVtx"].array()),
-            "mu3_pt_NoVtx": max_or_default(tree["mu3_pt_NoVtx"].array()),
-            "mu3_eta_NoVtx": max_or_default(tree["mu3_eta_NoVtx"].array()),
-            "mu3_phi_NoVtx": max_or_default(tree["mu3_phi_NoVtx"].array()),
-            "mu3_isGlobal_NoVtx": max_or_default(tree["mu3_isGlobal_NoVtx"].array()),
-            "mu3_isTracker_NoVtx": max_or_default(tree["mu3_isTracker_NoVtx"].array()),
-            "mu3_chi2Ndof_NoVtx": max_or_default(tree["mu3_chi2Ndof_NoVtx"].array()),
-            "mu3_trk_dxy_NoVtx": max_or_default(tree["mu3_trk_dxy_NoVtx"].array()),
-            "mu3_trk_dxyError_NoVtx": max_or_default(tree["mu3_trk_dxyError_NoVtx"].array()),
-            "mu4_pt_NoVtx": max_or_default(tree["mu4_pt_NoVtx"].array()),
-            "mu4_eta_NoVtx": max_or_default(tree["mu4_eta_NoVtx"].array()),
-            "mu4_phi_NoVtx": max_or_default(tree["mu4_phi_NoVtx"].array()),
-            "mu4_isGlobal_NoVtx": max_or_default(tree["mu4_isGlobal_NoVtx"].array()),
-            "mu4_isTracker_NoVtx": max_or_default(tree["mu4_isTracker_NoVtx"].array()),
-            "mu4_chi2Ndof_NoVtx": max_or_default(tree["mu4_chi2Ndof_NoVtx"].array()),
-            "mu4_trk_dxy_NoVtx": max_or_default(tree["mu4_trk_dxy_NoVtx"].array()),
-            "mu4_trk_dxyError_NoVtx": max_or_default(tree["mu4_trk_dxyError_NoVtx"].array()),
-
-            "label": label
-        })
-        return df_NoVtx
 
 print('Preparing signal dataframe...')
 
