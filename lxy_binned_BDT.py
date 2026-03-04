@@ -32,6 +32,7 @@ if model == 'B':
         filename_sig = 'signal_B_10mm.root'
     elif ctau == 100:
         filename_sig = 'signal_B_100mm.root'
+
 QCD_50to80 = 'QCD50to80.root'
 QCD_80to120 = 'QCD80to120.root'
 QCD120to170 = 'QCD120to170.root'
@@ -84,7 +85,7 @@ def plot_variable(var, ctau):
     axes[1].set_yscale("log")
 
     plt.tight_layout()
-    plt.savefig(f"curves_{model}/{var}_ctau_{ctau}mm.png")
+    plt.savefig(f"curves_trig_{model}/{var}_ctau_{ctau}mm.png")
 
 def build_dataframe(filename, label, collection):
 
@@ -220,7 +221,6 @@ def build_dataframe(filename, label, collection):
         })
         return df_NoVtx
 
-
 print('Preparing signal dataframe...')
 
 df_sig_Vtx = build_dataframe(filename_sig, 1, 'Vtx')
@@ -231,102 +231,125 @@ df_QCD_50to80_Vtx = build_dataframe(QCD_50to80, 0, 'Vtx')
 df_QCD_50to80_NoVtx = build_dataframe(QCD_50to80, 0, 'NoVtx')
 df_QCD_80to120_Vtx = build_dataframe(QCD_80to120, 0, 'Vtx')
 df_QCD_80to120_NoVtx = build_dataframe(QCD_80to120, 0, 'NoVtx')
-df_QCD_120to170_Vtx = build_dataframe(QCD_120to170, 0, 'Vtx')
-df_QCD_120to170_NoVtx = build_dataframe(QCD_120to170, 0, 'NoVtx')
 
-df_bkg_Vtx = pd.concat([df_QCD_50to80_Vtx, df_QCD_80to120_Vtx, df_QCD_120to170_Vtx], ignore_index=True)
-df_bkg_NoVtx = pd.concat([df_QCD_50to80_NoVtx, df_QCD_80to120_NoVtx, df_QCD_120to170_NoVtx], ignore_index=True)
+df_bkg_Vtx = pd.concat([df_QCD_50to80_Vtx, df_QCD_80to120_Vtx], ignore_index=True)
+df_bkg_NoVtx = pd.concat([df_QCD_50to80_NoVtx, df_QCD_80to120_NoVtx], ignore_index=True)
 
 
 df_Vtx = pd.concat([df_sig_Vtx, df_bkg_Vtx], ignore_index=True)
 df_NoVtx = pd.concat([df_sig_NoVtx, df_bkg_NoVtx], ignore_index=True)
 
-X_Vtx = df_Vtx.drop("label", axis=1)
-y_Vtx = df_Vtx["label"]
-X_NoVtx = df_NoVtx.drop("label", axis=1)
-y_NoVtx = df_NoVtx["label"]
+lxy_bins = [0.0, 0.2, 1.0, 2.4, 3.1, 7.0, 11.0, 16.0, 70.0]
 
-X_train_Vtx, X_test_Vtx, y_train_Vtx, y_test_Vtx = train_test_split(X_Vtx, y_Vtx, test_size=0.3, random_state=42, stratify=y_Vtx)
-X_train_NoVtx, X_test_NoVtx, y_train_NoVtx, y_test_NoVtx = train_test_split(X_NoVtx, y_NoVtx, test_size=0.3, random_state=42, stratify=y_NoVtx)
+lxy_labels = ["0p0to0p2", "0p2to1p0", "1p0to2p4", "2p4to3p1", "3p1to7p0", "7p0to11p0", "11p0to16p0", "16p0to70p0"]
 
-bdt_Vtx = XGBClassifier(
-    n_estimators=100,
-    max_depth=3,
-    learning_rate=0.1,
-    use_label_encoder=False,
-    eval_metric='logloss'
-)
-bdt_NoVtx = XGBClassifier(
-    n_estimators=100,
-    max_depth=3,
-    learning_rate=0.1,
-    use_label_encoder=False,
-    eval_metric='logloss'
-)
+df_Vtx["lxy_bin"] = pd.cut(df_Vtx["SV1_lxy_Vtx"], bins=lxy_bins, labels=lxy_labels, include_lowest=True)
+df_NoVtx["lxy_bin"] = pd.cut(df_NoVtx["SV1_lxy_NoVtx"], bins=lxy_bins, labels=lxy_labels, include_lowest=True)
 
-print('Training and testing...')
-bdt_Vtx.fit(X_train_Vtx, y_train_Vtx)
-bdt_NoVtx.fit(X_train_NoVtx, y_train_NoVtx)
+for bin_label in lxy_labels:
 
-y_pred_Vtx = bdt_Vtx.predict(X_test_Vtx)
-y_pred_prob_Vtx = bdt_Vtx.predict_proba(X_test_Vtx)[:,1]
-y_pred_NoVtx = bdt_NoVtx.predict(X_test_NoVtx)
-y_pred_prob_NoVtx = bdt_NoVtx.predict_proba(X_test_NoVtx)[:,1]
+    print(f"\n=== Lxy bin: {bin_label} ===")
 
-print("Accuracy (Vtx):", accuracy_score(y_test_Vtx, y_pred_Vtx))
-print("ROC AUC (Vtx):", roc_auc_score(y_test_Vtx, y_pred_prob_Vtx))
-print("Accuracy (NoVtx):", accuracy_score(y_test_NoVtx, y_pred_NoVtx))
-print("ROC AUC (NoVtx):", roc_auc_score(y_test_NoVtx, y_pred_prob_NoVtx))
+    # ================= Vtx =================
+    df_bin_Vtx = df_Vtx[df_Vtx["lxy_bin"] == bin_label].copy()
+    df_bin_NoVtx = df_NoVtx[df_NoVtx["lxy_bin"] == bin_label].copy()
 
+    # Skip low statistics bins
+    print(len(df_bin_Vtx))
+    print(len(df_bin_NoVtx))
+    if len(df_bin_Vtx) < 100 or len(df_bin_NoVtx) < 100:
+        print("Not enough events, skipping")
+        continue
 
+    X_Vtx_bin = df_bin_Vtx.drop(["label", "lxy_bin"], axis=1)
+    y_Vtx_bin = df_bin_Vtx["label"]
 
-print('Plotting...')
-fpr_Vtx, tpr_Vtx, thresholds_Vtx = roc_curve(y_test_Vtx, y_pred_prob_Vtx)
-fig, ax = plt.subplots(figsize=(6,6), constrained_layout=True)
-fpr_NoVtx, tpr_NoVtx, thresholds_NoVtx = roc_curve(y_test_NoVtx, y_pred_prob_NoVtx)
+    X_NoVtx_bin = df_bin_NoVtx.drop(["label", "lxy_bin"], axis=1)
+    y_NoVtx_bin = df_bin_NoVtx["label"]
 
-ax.plot(fpr_Vtx, tpr_Vtx, label=f'Vtx collection (AUC = {roc_auc_score(y_test_Vtx, y_pred_prob_Vtx):.3f})')
-ax.plot(fpr_NoVtx, tpr_NoVtx, label=f'NoVtx collection (AUC = {roc_auc_score(y_test_NoVtx, y_pred_prob_NoVtx):.3f})')
-ax.plot([0,1],[0,1],'k--', alpha=0.5)
+    X_train_Vtx, X_test_Vtx, y_train_Vtx, y_test_Vtx = train_test_split(
+        X_Vtx_bin, y_Vtx_bin, test_size=0.3, random_state=42, stratify=y_Vtx_bin
+    )
 
-ax.set_xlabel("False Positive Rate")
-ax.set_ylabel("True Positive Rate")
-ax.set_title(f"ROC Curve (ctau = {ctau}mm)")
-ax.legend(loc="lower right")
+    X_train_NoVtx, X_test_NoVtx, y_train_NoVtx, y_test_NoVtx = train_test_split(
+        X_NoVtx_bin, y_NoVtx_bin, test_size=0.3, random_state=42, stratify=y_NoVtx_bin
+    )
 
-fig.savefig(f'curves_{model}/ROC_curves_ctau_{ctau}_woIso.png', dpi=150, bbox_inches="tight")
-plt.close(fig)
+    # Train models
+    bdt_Vtx = XGBClassifier(
+        n_estimators=100,
+        max_depth=3,
+        learning_rate=0.1,
+        use_label_encoder=False,
+        eval_metric="logloss"
+    )
 
+    bdt_NoVtx = XGBClassifier(
+        n_estimators=100,
+        max_depth=3,
+        learning_rate=0.1,
+        use_label_encoder=False,
+        eval_metric="logloss"
+    )
 
-importances_Vtx = bdt_Vtx.feature_importances_
-feat_names_Vtx = X_Vtx.columns
-fig, ax = plt.subplots(figsize=(8,10), constrained_layout=True)
-ax.barh(feat_names_Vtx, importances_Vtx)
-ax.set_xlabel("Feature importance (Vtx)")
-ax.set_ylabel("Variable")
-ax.set_title(f"Feature Importance (ctau = {ctau}mm)")
-ax.tick_params(axis='y', labelsize=8)
-ax.tick_params(axis='x', labelsize=9)
-ax.invert_yaxis()
-fig.savefig(f'curves_{model}/Feature_Importance_Vtx_ctau_{ctau}_woIso.png', dpi=150, bbox_inches="tight")
-plt.close(fig)
+    bdt_Vtx.fit(X_train_Vtx, y_train_Vtx)
+    bdt_NoVtx.fit(X_train_NoVtx, y_train_NoVtx)
 
-importances_NoVtx = bdt_NoVtx.feature_importances_
-feat_names_NoVtx = X_NoVtx.columns
-fig, ax = plt.subplots(figsize=(8,10), constrained_layout=True)
-ax.barh(feat_names_NoVtx, importances_NoVtx)
-ax.set_xlabel("Feature importance (Vtx)")
-ax.set_ylabel("Variable")
-ax.set_title(f"XGBoost Feature Importance (ctau = {ctau}mm)")
-ax.tick_params(axis='y', labelsize=8)
-ax.tick_params(axis='x', labelsize=9)
-ax.invert_yaxis()
-fig.savefig(f'curves_{model}/Feature_Importance_NoVtx_ctau_{ctau}_woIso.png', dpi=150, bbox_inches="tight")
-plt.close(fig)
+    # Predictions
+    y_pred_prob_Vtx = bdt_Vtx.predict_proba(X_test_Vtx)[:, 1]
+    y_pred_prob_NoVtx = bdt_NoVtx.predict_proba(X_test_NoVtx)[:, 1]
 
+    # ================= ROC =================
+    fpr_Vtx, tpr_Vtx, _ = roc_curve(y_test_Vtx, y_pred_prob_Vtx)
+    fpr_NoVtx, tpr_NoVtx, _ = roc_curve(y_test_NoVtx, y_pred_prob_NoVtx)
 
-print('Plotting variables...')
-vars_to_plot = ["SV1_dphi", "SV2_dphi", "SV1_pt",   "SV2_pt", "SV1_lxy",  "SV2_lxy", "mu1_pt", "mu2_pt"]
+    fig, ax = plt.subplots(figsize=(6, 6), constrained_layout=True)
 
-for var in vars_to_plot:
-    plot_variable(var, ctau)
+    ax.plot(fpr_Vtx, tpr_Vtx,
+            label=f'Vtx (AUC = {roc_auc_score(y_test_Vtx, y_pred_prob_Vtx):.3f})')
+
+    ax.plot(fpr_NoVtx, tpr_NoVtx,
+            label=f'NoVtx (AUC = {roc_auc_score(y_test_NoVtx, y_pred_prob_NoVtx):.3f})')
+
+    ax.plot([0, 1], [0, 1], 'k--', alpha=0.5)
+
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title(f"ROC Curve (ctau = {ctau}mm, Lxy = {bin_label})")
+    ax.legend(loc="lower right")
+
+    fig.savefig(f'curves_trig_{model}/ROC_ctau_{ctau}_lxy_{bin_label}_woIso.png',
+                dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    # ================= Feature importance Vtx =================
+    importances_Vtx = bdt_Vtx.feature_importances_
+    feat_names_Vtx = X_Vtx_bin.columns
+
+    fig, ax = plt.subplots(figsize=(8, 10), constrained_layout=True)
+    ax.barh(feat_names_Vtx, importances_Vtx)
+    ax.set_xlabel("Feature importance (Vtx)")
+    ax.set_ylabel("Variable")
+    ax.set_title(f"Feature Importance Vtx (ctau = {ctau}mm, Lxy = {bin_label})")
+    ax.tick_params(axis='y', labelsize=8)
+    ax.invert_yaxis()
+
+    fig.savefig(f'curves_trig_{model}/FeatImp_Vtx_ctau_{ctau}_lxy_{bin_label}_woIso.png',
+                dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    # ================= Feature importance NoVtx =================
+    importances_NoVtx = bdt_NoVtx.feature_importances_
+    feat_names_NoVtx = X_NoVtx_bin.columns
+
+    fig, ax = plt.subplots(figsize=(8, 10), constrained_layout=True)
+    ax.barh(feat_names_NoVtx, importances_NoVtx)
+    ax.set_xlabel("Feature importance (NoVtx)")
+    ax.set_ylabel("Variable")
+    ax.set_title(f"Feature Importance NoVtx (ctau = {ctau}mm, Lxy = {bin_label})")
+    ax.tick_params(axis='y', labelsize=8)
+    ax.invert_yaxis()
+
+    fig.savefig(f'curves_trig_{model}/FeatImp_NoVtx_ctau_{ctau}_lxy_{bin_label}_woIso.png',
+                dpi=150, bbox_inches="tight")
+    plt.close(fig)
