@@ -432,6 +432,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
           float sv_dphi = (vtxPos.x() * sv_px + vtxPos.y() * sv_py) / (lxy * sv_pt);
           float sv_3Dangle = (vtxPos.x() * sv_px + vtxPos.y() * sv_py + vtxPos.z() * sv_pz) / (L3D * sv_p);
+          float sv_ndof = fittedVertex.degreesOfFreedom();
 
           if (counter_Vtx == 0){
             counter_Vtx++;
@@ -451,6 +452,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV1_zErr_Vtx.push_back(zErr);
             SV1_mu1_Vtx.push_back(t1.mu_index);
             SV1_mu2_Vtx.push_back(t2.mu_index);
+            SV1_ndof_Vtx.push_back(sv_ndof);
           }
           else if (counter_Vtx == 1){
             counter_Vtx++;
@@ -470,6 +472,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV2_zErr_Vtx.push_back(zErr);
             SV2_mu1_Vtx.push_back(t1.mu_index);
             SV2_mu2_Vtx.push_back(t2.mu_index);
+            SV2_ndof_Vtx.push_back(sv_ndof);
           }
         }
       }
@@ -638,6 +641,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
           float sv_dphi = (vtxPos.x() * sv_px + vtxPos.y() * sv_py) / (lxy * sv_pt);
           float sv_3Dangle = (vtxPos.x() * sv_px + vtxPos.y() * sv_py + vtxPos.z() * sv_pz) / (L3D * sv_p);
+          float sv_ndof = fittedVertex.degreesOfFreedom();
 
 
           if (counter_NoVtx == 0){
@@ -658,6 +662,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV1_zErr_NoVtx.push_back(zErr);
             SV1_mu1_NoVtx.push_back(t1.mu_index);
             SV1_mu2_NoVtx.push_back(t2.mu_index);
+            SV1_ndof_NoVtx.push_back(sv_ndof);
           }
           else if (counter_NoVtx == 1){
             counter_NoVtx++;
@@ -677,6 +682,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
             SV2_zErr_NoVtx.push_back(zErr);
             SV2_mu1_NoVtx.push_back(t1.mu_index);
             SV2_mu2_NoVtx.push_back(t2.mu_index);
+            SV2_ndof_NoVtx.push_back(sv_ndof);
           }
         }
       }
@@ -714,6 +720,8 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV1_zErr_NoVtx", &SV1_zErr_NoVtx);
   tout->Branch("SV1_mu1_NoVtx", &SV1_mu1_NoVtx);
   tout->Branch("SV1_mu2_NoVtx", &SV1_mu2_NoVtx);
+  tout->Branch("SV1_ndof_NoVtx", &SV1_ndof_NoVtx);
+
 
   tout->Branch("SV2_chi2_NoVtx", &SV2_chi2_NoVtx);
   tout->Branch("SV2_prob_NoVtx", &SV2_prob_NoVtx);
@@ -730,6 +738,7 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV2_zErr_NoVtx", &SV2_zErr_NoVtx);
   tout->Branch("SV2_mu1_NoVtx", &SV2_mu1_NoVtx);
   tout->Branch("SV2_mu2_NoVtx", &SV2_mu2_NoVtx);
+  tout->Branch("SV2_ndof_NoVtx", &SV2_ndof_NoVtx);
 
   // ===================== NoVtx muons =====================
   tout->Branch("nmu_NoVtx", &nmu_NoVtx);
@@ -802,6 +811,7 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV1_zErr_Vtx", &SV1_zErr_Vtx);
   tout->Branch("SV1_mu1_Vtx", &SV1_mu1_Vtx);
   tout->Branch("SV1_mu2_Vtx", &SV1_mu2_Vtx);
+  tout->Branch("SV1_ndof_Vtx", &SV1_ndof_Vtx);
 
   tout->Branch("SV2_chi2_Vtx", &SV2_chi2_Vtx);
   tout->Branch("SV2_prob_Vtx", &SV2_prob_Vtx);
@@ -818,6 +828,7 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("SV2_zErr_Vtx", &SV2_zErr_Vtx);
   tout->Branch("SV2_mu1_Vtx", &SV2_mu1_Vtx);
   tout->Branch("SV2_mu2_Vtx", &SV2_mu2_Vtx);
+  tout->Branch("SV2_ndof_Vtx", &SV2_ndof_Vtx);
 
   // ===================== Vtx muons =====================
   tout->Branch("nmu_Vtx", &nmu_Vtx);
