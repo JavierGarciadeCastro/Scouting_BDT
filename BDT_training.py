@@ -16,14 +16,14 @@ from sklearn.metrics import roc_auc_score, accuracy_score, roc_curve
 root_output = Path("root_output")
 
 ctau = 100
-model = 'B'
+model = 'A'
 if model == 'A':
     if ctau == 1:
-        filename_sig = 'signal_A_1mm.root'
+        filename_sig = 'signal1_A_1mm.root'
     elif ctau == 10:
-        filename_sig = 'signal_A_10mm.root'
+        filename_sig = 'signal1_A_10mm.root'
     elif ctau == 100:
-        filename_sig = 'signal_A_100mm.root'
+        filename_sig = 'signal1_A_100mm.root'
     
 if model == 'B':
     if ctau == 1:
@@ -34,7 +34,7 @@ if model == 'B':
         filename_sig = 'signal_B_100mm.root'
 QCD_50to80 = 'QCD50to80.root'
 QCD_80to120 = 'QCD80to120.root'
-QCD120to170 = 'QCD120to170.root'
+QCD_120to170 = 'QCD120to170.root'
 
 def plot_variable(var, ctau):
     fig, axes = plt.subplots(1, 2, figsize=(12, 5), sharey=True)
@@ -54,16 +54,21 @@ def plot_variable(var, ctau):
     elif "trackIso" in var:
         xmin = 0
         xmax = 10
+    elif "dxy" in var:
+        xmin = 0
+        xmax = 50
+        
     bins = np.linspace(xmin, xmax, 51)
     axes[0].hist(df_sig_Vtx[var_Vtx], bins=bins, histtype="step", label=f"Signal, ctau = {ctau}mm", linewidth=2)
-    axes[0].hist(df_bkg_Vtx[var_Vtx], bins=bins, histtype="step", label="QCD", linewidth=2)
+    #axes[0].hist(df_bkg_Vtx[var_Vtx], bins=bins, histtype="step", label="QCD", linewidth=2)
     axes[0].set_title(f"{var} (Vtx)")
     axes[0].set_xlabel(var)
     axes[0].set_ylabel("Entries")
     axes[0].set_xlim(xmin, xmax)
     hist_sig_Vtx, _ = np.histogram(df_sig_Vtx[var_Vtx].dropna(), bins=bins)
-    hist_bkg_Vtx, _ = np.histogram(df_bkg_Vtx[var_Vtx].dropna(), bins=bins)
-    ymax_Vtx = 1.2 * max(hist_sig_Vtx.max(), hist_bkg_Vtx.max())
+    #hist_bkg_Vtx, _ = np.histogram(df_bkg_Vtx[var_Vtx].dropna(), bins=bins)
+    #ymax_Vtx = 1.2 * max(hist_sig_Vtx.max(), hist_bkg_Vtx.max())
+    ymax_Vtx = 1.2 * hist_sig_Vtx.max()
     axes[0].set_ylim(0, ymax_Vtx)
     axes[0].legend()
     axes[0].set_yscale("log")
@@ -72,13 +77,14 @@ def plot_variable(var, ctau):
     # ===== NoVtx =====
     var_NoVtx = f"{var}_NoVtx"
     axes[1].hist(df_sig_NoVtx[var_NoVtx], bins=bins, histtype="step", label=f"Signal, ctau = {ctau}mm", linewidth=2)
-    axes[1].hist(df_bkg_NoVtx[var_NoVtx], bins=bins, histtype="step", label="Background", linewidth=2)
+    #axes[1].hist(df_bkg_NoVtx[var_NoVtx], bins=bins, histtype="step", label="Background", linewidth=2)
     axes[1].set_title(f"{var} (NoVtx)")
     axes[1].set_xlabel(var)
     axes[1].set_xlim(xmin, xmax)
     hist_sig_NoVtx, _ = np.histogram(df_sig_NoVtx[var_NoVtx].dropna(), bins=bins)
-    hist_bkg_NoVtx, _ = np.histogram(df_bkg_NoVtx[var_NoVtx].dropna(), bins=bins)
-    ymax_NoVtx = 1.2 * max(hist_sig_NoVtx.max(), hist_bkg_NoVtx.max())
+    #hist_bkg_NoVtx, _ = np.histogram(df_bkg_NoVtx[var_NoVtx].dropna(), bins=bins)
+    #ymax_NoVtx = 1.2 * max(hist_sig_NoVtx.max(), hist_bkg_NoVtx.max())
+    ymax_NoVtx = 1.2 * hist_sig_NoVtx.max()
     axes[1].set_ylim(0, ymax_NoVtx)
     axes[1].legend()
     axes[1].set_yscale("log")
@@ -92,7 +98,7 @@ def build_dataframe(filename, label, collection):
     tree = file["tout"]
 
     def max_or_default(array, default=0):
-        return np.array([ak.max(a) if len(a) > 0 else default for a in array])
+        return ak.to_numpy(ak.fill_none(ak.max(array, axis=1), default))
 
     if collection == 'Vtx':
         df_Vtx = pd.DataFrame({
@@ -240,6 +246,11 @@ print('Preparing signal dataframe...')
 df_sig_Vtx = build_dataframe(filename_sig, 1, 'Vtx')
 df_sig_NoVtx = build_dataframe(filename_sig, 1, 'NoVtx')
 
+for mu in [1, 2, 3, 4]:
+    df_sig_Vtx[f"mu{mu}_trk_dxySig_Vtx"] = df_sig_Vtx[f"mu{mu}_trk_dxy_Vtx"] / df_sig_Vtx[f"mu{mu}_trk_dxyError_Vtx"]
+    df_sig_NoVtx[f"mu{mu}_trk_dxySig_NoVtx"] = df_sig_NoVtx[f"mu{mu}_trk_dxy_NoVtx"] / df_sig_NoVtx[f"mu{mu}_trk_dxyError_NoVtx"]
+
+'''
 print('Preparing background dataframe...')
 df_QCD_50to80_Vtx = build_dataframe(QCD_50to80, 0, 'Vtx')
 df_QCD_50to80_NoVtx = build_dataframe(QCD_50to80, 0, 'NoVtx')
@@ -338,9 +349,9 @@ ax.invert_yaxis()
 fig.savefig(f'curves_{model}/Feature_Importance_NoVtx_ctau_{ctau}_woIso.png', dpi=150, bbox_inches="tight")
 plt.close(fig)
 
-
+'''
 print('Plotting variables...')
-vars_to_plot = ["SV1_dphi", "SV2_dphi", "SV1_pt",   "SV2_pt", "SV1_lxy",  "SV2_lxy", "mu1_pt", "mu2_pt"]
+vars_to_plot = ["mu1_trk_dxy", "mu2_trk_dxy", "mu3_trk_dxy", "mu4_trk_dxy", "mu1_trk_dxySig", "mu2_trk_dxySig", "mu3_trk_dxySig", "mu4_trk_dxySig"]
 
 for var in vars_to_plot:
     plot_variable(var, ctau)

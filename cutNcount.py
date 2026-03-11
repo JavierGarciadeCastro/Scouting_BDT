@@ -11,15 +11,15 @@ from pathlib import Path
 
 root_output = Path("root_output")
 
-ctau = 10
+ctau = 1
 model = 'A'
 if model == 'A':
     if ctau == 1:
-        filename_sig = 'signal_A_1mm.root'
+        filename_sig = 'signal1_A_1mm.root'
     elif ctau == 10:
-        filename_sig = 'signal_A_10mm.root'
+        filename_sig = 'signal1_A_10mm.root'
     elif ctau == 100:
-        filename_sig = 'signal_A_100mm.root'
+        filename_sig = 'signal1_A_100mm.root'
     
 if model == 'B':
     if ctau == 1:
@@ -32,67 +32,105 @@ if model == 'B':
 bkg_files = ["QCD50to80.root", "QCD80to120.root", "QCD120to170.root"]
 
 def apply_cuts(arr):
-    mu_pt = np.stack([arr["mu1_pt_Vtx"],arr["mu2_pt_Vtx"],arr["mu3_pt_Vtx"],arr["mu4_pt_Vtx"],], axis=1)
-    mu_eta = np.stack([arr["mu1_eta_Vtx"],arr["mu2_eta_Vtx"],arr["mu3_eta_Vtx"],arr["mu4_eta_Vtx"],], axis=1)
-    mu_phi = np.stack([arr["mu1_phi_Vtx"],arr["mu2_phi_Vtx"],arr["mu3_phi_Vtx"],arr["mu4_phi_Vtx"],], axis=1)
-    mu_dxy = np.stack([arr["mu1_trk_dxy_Vtx"],arr["mu2_trk_dxy_Vtx"],arr["mu3_trk_dxy_Vtx"],arr["mu4_trk_dxy_Vtx"],], axis=1)
-    mu_dxyErr = np.stack([arr["mu1_trk_dxyError_Vtx"],arr["mu2_trk_dxyError_Vtx"],arr["mu3_trk_dxyError_Vtx"],arr["mu4_trk_dxyError_Vtx"],], axis=1)
-    mu_chi2Ndof = np.stack([arr["mu1_chi2Ndof_Vtx"],arr["mu2_chi2Ndof_Vtx"],arr["mu3_chi2Ndof_Vtx"],arr["mu4_chi2Ndof_Vtx"],], axis=1)
-
-    idx1 = arr["SV1_mu1_Vtx"] - 1
-    idx2 = arr["SV1_mu2_Vtx"] - 1
+    # ================= Muon arrays =================
+    mu_pt = np.stack([arr[f"mu{i}_pt_Vtx"] for i in range(1,5)], axis=1)
+    mu_eta = np.stack([arr[f"mu{i}_eta_Vtx"] for i in range(1,5)], axis=1)
+    mu_phi = np.stack([arr[f"mu{i}_phi_Vtx"] for i in range(1,5)], axis=1)
+    mu_dxy = np.stack([arr[f"mu{i}_trk_dxy_Vtx"] for i in range(1,5)], axis=1)
+    mu_dxyErr = np.stack([arr[f"mu{i}_trk_dxyError_Vtx"] for i in range(1,5)], axis=1)
+    mu_chi2Ndof = np.stack([arr[f"mu{i}_chi2Ndof_Vtx"] for i in range(1,5)], axis=1)
 
     rows = np.arange(mu_pt.shape[0])
 
+    # ================= SV1 muons =================
+    idx1 = arr["SV1_mu1_Vtx"]
+    idx2 = arr["SV1_mu2_Vtx"]
     mu1_pt  = mu_pt[rows, idx1]
     mu2_pt  = mu_pt[rows, idx2]
-    
     mu1_eta = mu_eta[rows, idx1]
     mu2_eta = mu_eta[rows, idx2]
-    
     mu1_phi = mu_phi[rows, idx1]
     mu2_phi = mu_phi[rows, idx2]
-    
     mu1_dxy = mu_dxy[rows, idx1]
     mu2_dxy = mu_dxy[rows, idx2]
-
     mu1_dxyErr = mu_dxyErr[rows, idx1]
     mu2_dxyErr = mu_dxyErr[rows, idx2]
-
     mu1_chi2Ndof = mu_chi2Ndof[rows, idx1]
     mu2_chi2Ndof = mu_chi2Ndof[rows, idx2]
+    sv1_xErr = arr["SV1_xErr_Vtx"]
+    sv1_yErr = arr["SV1_yErr_Vtx"]
+    sv1_zErr = arr["SV1_zErr_Vtx"]
+    sv1_dphi = arr["SV1_dphi_Vtx"]
+    sv1_3Dangle = arr["SV1_3Dangle_Vtx"]
+    sv1_lxy = arr["SV1_lxy_Vtx"]
+    sv1_chi2Ndof = arr["SV1_chi2_Vtx"] / arr["SV1_ndof_Vtx"]
 
-    delta_eta = mu1_eta - mu2_eta
-    delta_phi = mu1_phi - mu2_phi
-    delta_phi = (delta_phi + np.pi) % (2*np.pi) - np.pi
-    delta_phi = np.where(np.abs(delta_phi) > 1e-6, delta_phi, 1e-6)
-    dxyErr1 = np.where(mu1_dxyErr > 1e-6, mu1_dxyErr, 1e-6)
-    dxyErr2 = np.where(mu2_dxyErr > 1e-6, mu2_dxyErr, 1e-6)
+    # ================= SV2 variables (if they exist) =================
+    idx1_2 = arr["SV2_mu1_Vtx"]
+    idx2_2 = arr["SV2_mu2_Vtx"]
+    mu1_pt_2  = mu_pt[rows, idx1_2]
+    mu2_pt_2  = mu_pt[rows, idx2_2]
+    mu1_eta_2 = mu_eta[rows, idx1_2]
+    mu2_eta_2 = mu_eta[rows, idx2_2]
+    mu1_phi_2 = mu_phi[rows, idx1_2]
+    mu2_phi_2 = mu_phi[rows, idx2_2]
+    mu1_dxy_2 = mu_dxy[rows, idx1_2]
+    mu2_dxy_2 = mu_dxy[rows, idx2_2]
+    mu1_dxyErr_2 = mu_dxyErr[rows, idx1_2]
+    mu2_dxyErr_2 = mu_dxyErr[rows, idx2_2]
+    mu1_chi2Ndof_2 = mu_chi2Ndof[rows, idx1_2]
+    mu2_chi2Ndof_2 = mu_chi2Ndof[rows, idx2_2]
 
-    log_ratio = np.log10(np.abs(delta_eta) / np.abs(delta_phi))
-    dxy_sig1 = mu1_dxy / dxyErr1
-    dxy_sig2 = mu2_dxy / dxyErr2
-    sv_chi2Ndof = arr["SV1_chi2_Vtx"] / arr["SV1_ndof_Vtx"]
+    sv2_xErr = arr["SV2_xErr_Vtx"]
+    sv2_yErr = arr["SV2_yErr_Vtx"]
+    sv2_zErr = arr["SV2_zErr_Vtx"]
+    sv2_dphi = arr["SV2_dphi_Vtx"]
+    sv2_3Dangle = arr["SV2_3Dangle_Vtx"]
+    sv2_lxy = arr["SV2_lxy_Vtx"]
+    sv2_chi2Ndof = arr["SV2_chi2_Vtx"] / arr["SV2_ndof_Vtx"]
 
+    # ================= Function to compute SV quality + dimuon cuts =================
+    def compute_mask(sv_xErr, sv_yErr, sv_zErr, sv_dphi, sv_3Dangle, sv_lxy, sv_chi2, 
+                     mu1_dxy, mu2_dxy, mu1_dxyErr, mu2_dxyErr, mu1_chi2Ndof, mu2_chi2Ndof, 
+                     mu1_phi, mu2_phi, mu1_eta, mu2_eta):
+        # SV cuts
+        sv_mask = ((sv_xErr < 0.05) & (sv_yErr < 0.05) & (sv_zErr < 0.1) & (sv_dphi > 0) & (sv_3Dangle > 0) & (sv_lxy < 70) & (sv_lxy > 0) & (sv_chi2 < 3))
 
-    mask = (
-        (arr["SV1_xErr_Vtx"] < 0.05) &
-        (arr["SV1_yErr_Vtx"] < 0.05) &
-        (arr["SV1_zErr_Vtx"] < 0.1) &
-        (arr["SV1_dphi_Vtx"] > 0) &
-        (arr["SV1_3Dangle_Vtx"] > 0)&
-        (arr["SV1_lxy_Vtx"] < 70)&
-        (sv_chi2Ndof < 3) &
-        (delta_phi < 2.8) &
-        (dxy_sig1 > 2) &
-        (dxy_sig2 > 2) &
-        (mu1_chi2Ndof < 3) &
-        (mu2_chi2Ndof < 3) &
-        (log_ratio < 1.25)
-    )
+        # Dimuon cuts
+        delta_phi = mu1_phi - mu2_phi
+        delta_phi = (delta_phi + np.pi) % (2*np.pi) - np.pi
+        delta_phi = np.where(np.abs(delta_phi) > 1e-6, delta_phi, 1e-6)
+        delta_eta = mu1_eta - mu2_eta
+        log_ratio = np.log10(np.abs(delta_eta) / np.abs(delta_phi))
+        dxyErr1 = np.where(mu1_dxyErr > 1e-6, mu1_dxyErr, 1e-6)
+        dxyErr2 = np.where(mu2_dxyErr > 1e-6, mu2_dxyErr, 1e-6)
+        dxy_sig1 = np.abs(mu1_dxy) / dxyErr1
+        dxy_sig2 = np.abs(mu2_dxy) / dxyErr2
 
-    arr_selected = {k: v[mask] for k, v in arr.items()}
+        dimuon_mask = (
+            (dxy_sig1 > 2) & 
+            (dxy_sig2 > 2) &
+            (mu1_chi2Ndof < 3) & 
+            (mu2_chi2Ndof < 3) & 
+            (delta_phi < 2.8) & 
+            (log_ratio < 1.25)
+        )
 
+        return sv_mask & dimuon_mask
+
+    # ================= Masks =================
+    mask1 = compute_mask(sv1_xErr, sv1_yErr, sv1_zErr, sv1_dphi, sv1_3Dangle, sv1_lxy, sv1_chi2Ndof,
+                         mu1_dxy, mu2_dxy, mu1_dxyErr, mu2_dxyErr, mu1_chi2Ndof, mu2_chi2Ndof,
+                         mu1_phi, mu2_phi, mu1_eta, mu2_eta)
+
+    mask2 = compute_mask(sv2_xErr, sv2_yErr, sv2_zErr, sv2_dphi, sv2_3Dangle, sv2_lxy, sv2_chi2Ndof,
+                        mu1_dxy_2, mu2_dxy_2, mu1_dxyErr_2, mu2_dxyErr_2, mu1_chi2Ndof_2, mu2_chi2Ndof_2,
+                        mu1_phi_2, mu2_phi_2, mu1_eta_2, mu2_eta_2)
+
+    # ================= Final selection =================
+    final_mask = mask1 | mask2
+
+    arr_selected = {k: v[final_mask] for k, v in arr.items()}
     return arr_selected
 
 def build_numpy_arrays(filename, collection, label):
@@ -100,7 +138,7 @@ def build_numpy_arrays(filename, collection, label):
     tree = file["tout"]
 
     def max_or_default(array, default=0):
-        return np.array([ak.max(a) if len(a) > 0 else default for a in array])
+        return ak.to_numpy(ak.fill_none(ak.max(array, axis=1), default))
 
     branches = tree.keys()
     arr = {}
@@ -109,26 +147,42 @@ def build_numpy_arrays(filename, collection, label):
         prefix = "_Vtx"
     elif collection == 'NoVtx':
         prefix = "_NoVtx"
-    else:
-        raise ValueError("collection must be 'Vtx' or 'NoVtx'")
+
+
+    sv_vars = ["chi2", "prob", "lxy", "global", "dphi", "pt", "3Dangle", "L3D", "xErr", "yErr", "zErr", "mu1", "mu2", "ndof"]
+    mu_vars = ["pt", "eta", "phi", "isGlobal", "isTracker", "chi2Ndof", "trk_dxy", "trk_dxyError"]
 
     for sv in [1, 2]:
-        for var in ["chi2", "prob", "lxy", "global", "dphi", "pt", "3Dangle", "L3D",
-                    "xErr", "yErr", "zErr", "mu1", "mu2", "ndof"]:
+        for var in sv_vars:
             name = f"SV{sv}_{var}{prefix}"
             if name in branches:
                 arr[name] = max_or_default(tree[name].array())
     for mu in [1, 2, 3, 4]:
-        for var in ["pt", "eta", "phi", "isGlobal", "isTracker", "chi2Ndof",
-                    "trk_dxy", "trk_dxyError"]:
+        for var in mu_vars:
             name = f"mu{mu}_{var}{prefix}"
             if name in branches:
                 arr[name] = max_or_default(tree[name].array())
+
+    # ================= Sort SVs by probability =================
+    prob1 = arr[f"SV1_prob{prefix}"]
+    prob2 = arr[f"SV2_prob{prefix}"]
+    swap = prob2 > prob1
+
+    for var in sv_vars:
+        sv1 = f"SV1_{var}{prefix}"
+        sv2 = f"SV2_{var}{prefix}"
+        if sv1 in arr and sv2 in arr:
+            a = arr[sv1].copy()
+            b = arr[sv2].copy()
+            arr[sv1] = np.where(swap, b, a)
+            arr[sv2] = np.where(swap, a, b)
 
     arr["label"] = np.full_like(arr[list(arr.keys())[0]], label)
     return arr
 
 sig_arrays = build_numpy_arrays(filename_sig, "Vtx", label=1)
+
+
 bkg_arrays_list = [build_numpy_arrays(f, "Vtx", label=0) for f in bkg_files]
 bkg_arrays = {k: np.concatenate([arr[k] for arr in bkg_arrays_list]) for k in bkg_arrays_list[0].keys()}
 
