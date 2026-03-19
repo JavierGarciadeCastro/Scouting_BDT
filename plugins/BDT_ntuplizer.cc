@@ -393,7 +393,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       reco::TrackBase::undefQuality
     );
 
-    int muIndex = iMu - 1;
+    int muIndex = iMu;
     allTracksTT_Vtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz, muIndex});
   }
   int counter_Vtx = 0;
