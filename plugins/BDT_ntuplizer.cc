@@ -21,6 +21,7 @@
 #include "DataFormats/GeometryVector/interface/GlobalPoint.h"
 #include "DataFormats/Math/interface/LorentzVector.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "TTree.h"
 
 #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
@@ -62,14 +63,19 @@ class BDT_ntuplizer : public edm::one::EDAnalyzer<> {
     Bool_t hltResult[100] = {false}; 
     bool passL1, passHLT;
 
+
+
     unsigned int run, lumi, evtn;
     edm::EDGetTokenT<std::vector<Run3ScoutingMuon>> muTokenScoutingVtx_;
     edm::EDGetTokenT<std::vector<Run3ScoutingMuon>> muTokenScoutingNoVtx_;
     edm::EDGetTokenT<std::vector<Run3ScoutingVertex>> svTokenScouting_;
     edm::ESGetToken<TransientTrackBuilder, TransientTrackRecord> theTransientTrackBuilderToken_;
+    edm::EDGetTokenT<std::vector<reco::GenParticle>> genToken_;
     
     TFile* fout;
     TTree* tout;
+
+    std::vector<int> passTrigger_;
     
     // ===================== SV variables =====================
     std::vector<unsigned int> SV1_ndof_NoVtx, SV1_ndof_Vtx;
@@ -119,6 +125,9 @@ class BDT_ntuplizer : public edm::one::EDAnalyzer<> {
     std::vector<std::vector<int>> mu3_vtxIdx_NoVtx, mu3_vtxIdx_Vtx;
     std::vector<std::vector<int>> mu4_vtxIdx_NoVtx, mu4_vtxIdx_Vtx;
 
+    //GEN particle variables (for gen-matching)
+    std::vector<float> gen_pt, gen_eta, gen_phi;
+
     float min_Pt, max_eta;
 };
 
@@ -130,7 +139,8 @@ BDT_ntuplizer::BDT_ntuplizer(const edm::ParameterSet& iConfig) :
   muTokenScoutingVtx_{consumes<std::vector<Run3ScoutingMuon>>(iConfig.getParameter<edm::InputTag>("ScoutingmuonsVtx"))},
   muTokenScoutingNoVtx_{consumes<std::vector<Run3ScoutingMuon>>(iConfig.getParameter<edm::InputTag>("ScoutingmuonsNoVtx"))},
   svTokenScouting_{consumes<std::vector<Run3ScoutingVertex>>(iConfig.getParameter<edm::InputTag>("hltScoutingMuonPacker_displacedVtx"))},
-  theTransientTrackBuilderToken_{esConsumes(edm::ESInputTag("", "TransientTrackBuilder"))}
+  theTransientTrackBuilderToken_{esConsumes(edm::ESInputTag("", "TransientTrackBuilder"))},
+  genToken_{consumes<std::vector<reco::GenParticle>>(iConfig.getParameter<edm::InputTag>("genParticlesInputTag"))}
   {vtriggerSelector_.reserve(vtriggerSelection_.size());
     for (auto const& vt : vtriggerSelection_)
       vtriggerSelector_.push_back(triggerExpression::parse(vt));
@@ -153,31 +163,28 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   min_Pt = 3;
   max_eta = 2.5;
   float minVtxProb = 0.001;
-  passL1 = false;
-  passHLT = false;
+
+  bool passL1 = false;
+  bool passHLT = false;
+
 
   const auto& theTransientTrackBuilder = iSetup.getData(theTransientTrackBuilderToken_);
   edm::Handle<std::vector<Run3ScoutingMuon>> ScoutingmuonsVtx;
   edm::Handle<std::vector<Run3ScoutingMuon>> ScoutingmuonsNoVtx;
   edm::Handle<std::vector<Run3ScoutingVertex>> ScoutingdisplacedVertices;
+  edm::Handle<std::vector<reco::GenParticle>> GenParts;
 
   iEvent.getByToken(muTokenScoutingVtx_, ScoutingmuonsVtx);
   iEvent.getByToken(muTokenScoutingNoVtx_, ScoutingmuonsNoVtx);
   iEvent.getByToken(svTokenScouting_, ScoutingdisplacedVertices);
+  iEvent.getByToken(genToken_, GenParts);
 
-  struct TaggedTT {
-    reco::TransientTrack tt;
-    bool isGlobal;
-    bool isTracker;
-    float px;
-    float py;
-    float pz;
-    int mu_index;
-  };
-  /*
+  /////////////////////////////////////////////////////////////////////
+  ///////////////////////// TRIGGERS //////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
+
   l1GtUtils_->retrieveL1(iEvent, iSetup, algToken_);
-
-  bool passL1 = false;
+  passTrigger_.clear();
 
   for (unsigned int i = 0; i < l1Seeds_.size(); i++) {
     const auto& l1seed(l1Seeds_.at(i));
@@ -191,7 +198,6 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     }
   }
   
-
   if (triggerCache_.setEvent(iEvent, iSetup)) {
     for (unsigned int i = 0; i < vtriggerSelector_.size(); i++) {
       auto& vts(vtriggerSelector_.at(i));
@@ -206,11 +212,32 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
         passHLT = true;
     }
   }
-  if (!passL1) return;
-  if (!passHLT) return;
+  passTrigger_.push_back(passL1 && passHLT);
 
-  */
+  /////////////////////////////////////////////////////////////////////
+  //////////////////////// GEN PARTICLES //////////////////////////////
+  /////////////////////////////////////////////////////////////////////
 
+  gen_pt.clear(); gen_eta.clear(); gen_phi.clear();
+  auto GenPart = *GenParts;
+  unsigned int nGenParts = GenPart.size();
+
+  for (unsigned int iGen = 0; iGen < nGenParts; ++iGen) {
+    auto genpart = GenPart[iGen];
+    
+    if (abs(genpart.pdgId())==13 && genpart.status() == 1) {
+    //if (abs(genpart.pdgId())==13) {
+      gen_pt.push_back(genpart.pt());
+      gen_eta.push_back(genpart.eta());
+      gen_phi.push_back(genpart.phi());
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////
+  //////////////////////////// MUONS //////////////////////////////////
+  /////////////////////////////////////////////////////////////////////
+
+  struct TaggedTT {reco::TransientTrack tt; bool isGlobal; bool isTracker; float px; float py; float pz; int mu_index;};
   std::vector<TaggedTT> allTracksTT_NoVtx;
   std::vector<TaggedTT> allTracksTT_Vtx;
 
@@ -275,13 +302,15 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   ////////////////////// VTX COLLECTION   /////////////////////////////
   /////////////////////////////////////////////////////////////////////
 
+  int muCounter_Vtx = 0;
+
   for (unsigned int iMu = 0; iMu < nMus_Vtx; ++iMu) {
     const auto& mu = muonCollectionVtx[iMu];
 
     if (mu.pt() < min_Pt) continue;
     if (std::abs(mu.eta()) > max_eta) continue;
 
-    if (iMu == 0){
+    if (muCounter_Vtx == 0){
       mu1_pt_Vtx.push_back(mu.pt());
       mu1_eta_Vtx.push_back(mu.eta());
       mu1_phi_Vtx.push_back(mu.phi());
@@ -295,7 +324,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu1_trk_dxy_Vtx.push_back(mu.trk_dxy());
       mu1_trk_dxyError_Vtx.push_back(mu.trk_dxyError());
     }
-    if (iMu == 1){
+    else if (muCounter_Vtx == 1){
       mu2_pt_Vtx.push_back(mu.pt());
       mu2_eta_Vtx.push_back(mu.eta());
       mu2_phi_Vtx.push_back(mu.phi());
@@ -309,7 +338,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu2_trk_dxy_Vtx.push_back(mu.trk_dxy());
       mu2_trk_dxyError_Vtx.push_back(mu.trk_dxyError());
     }
-    if (iMu == 2){
+    else if (muCounter_Vtx == 2){
       mu3_pt_Vtx.push_back(mu.pt());
       mu3_eta_Vtx.push_back(mu.eta());
       mu3_phi_Vtx.push_back(mu.phi());
@@ -323,7 +352,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu3_trk_dxy_Vtx.push_back(mu.trk_dxy());
       mu3_trk_dxyError_Vtx.push_back(mu.trk_dxyError());
     }
-    if (iMu == 3){
+    else if (muCounter_Vtx == 3){
       mu4_pt_Vtx.push_back(mu.pt());
       mu4_eta_Vtx.push_back(mu.eta());
       mu4_phi_Vtx.push_back(mu.phi());
@@ -337,6 +366,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu4_trk_dxy_Vtx.push_back(mu.trk_dxy());
       mu4_trk_dxyError_Vtx.push_back(mu.trk_dxyError());
     }
+    int muIndex = muCounter_Vtx;
+    muCounter_Vtx++;
 
     int charge1 = mu.charge();
     float chi2_1 = mu.trk_chi2();
@@ -394,8 +425,6 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       reco::TrackBase::undefAlgorithm,
       reco::TrackBase::undefQuality
     );
-
-    int muIndex = iMu;
     allTracksTT_Vtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz, muIndex});
   }
   int counter_Vtx = 0;
@@ -434,7 +463,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
           float sv_dphi = (vtxPos.x() * sv_px + vtxPos.y() * sv_py) / (lxy * sv_pt);
           float sv_3Dangle = (vtxPos.x() * sv_px + vtxPos.y() * sv_py + vtxPos.z() * sv_pz) / (L3D * sv_p);
-          float sv_ndof = fittedVertex.degreesOfFreedom();
+          int sv_ndof = fittedVertex.degreesOfFreedom();
 
           if (counter_Vtx == 0){
             counter_Vtx++;
@@ -485,12 +514,14 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   ////////////////////  No VTX COLLECTION   ///////////////////////////
   /////////////////////////////////////////////////////////////////////
 
+  int muCounter_NoVtx = 0;
+
   for (unsigned int iMu = 0; iMu < nMus_NoVtx; ++iMu) {
     const auto& mu = muonCollectionNoVtx[iMu];
     if (mu.pt() < min_Pt) continue;
     if (std::abs(mu.eta()) > max_eta) continue;
 
-    if (iMu == 0){
+    if (muCounter_NoVtx == 0){
       mu1_pt_NoVtx.push_back(mu.pt());
       mu1_eta_NoVtx.push_back(mu.eta());
       mu1_phi_NoVtx.push_back(mu.phi());
@@ -504,7 +535,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu1_trk_dxy_NoVtx.push_back(mu.trk_dxy());
       mu1_trk_dxyError_NoVtx.push_back(mu.trk_dxyError());
     }
-    if (iMu == 1){
+    else if (muCounter_NoVtx == 1){
       mu2_pt_NoVtx.push_back(mu.pt());
       mu2_eta_NoVtx.push_back(mu.eta());
       mu2_phi_NoVtx.push_back(mu.phi());
@@ -518,7 +549,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu2_trk_dxy_NoVtx.push_back(mu.trk_dxy());
       mu2_trk_dxyError_NoVtx.push_back(mu.trk_dxyError());
     }
-    if (iMu == 2){
+    else if (muCounter_NoVtx == 2){
       mu3_pt_NoVtx.push_back(mu.pt());
       mu3_eta_NoVtx.push_back(mu.eta());
       mu3_phi_NoVtx.push_back(mu.phi());
@@ -532,7 +563,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu3_trk_dxy_NoVtx.push_back(mu.trk_dxy());
       mu3_trk_dxyError_NoVtx.push_back(mu.trk_dxyError());
     }
-    if (iMu == 3){
+    else if (muCounter_NoVtx == 3){
       mu4_pt_NoVtx.push_back(mu.pt());
       mu4_eta_NoVtx.push_back(mu.eta());
       mu4_phi_NoVtx.push_back(mu.phi());
@@ -546,6 +577,9 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       mu4_trk_dxy_NoVtx.push_back(mu.trk_dxy());
       mu4_trk_dxyError_NoVtx.push_back(mu.trk_dxyError());
     }
+
+    int muIndex = muCounter_NoVtx;
+    muCounter_NoVtx++;
 
     int charge1 = mu.charge();
     float chi2_1 = mu.trk_chi2();
@@ -604,7 +638,6 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       reco::TrackBase::undefQuality
     );
 
-    int muIndex = iMu - 1;
     allTracksTT_NoVtx.push_back({theTransientTrackBuilder.build(track1), mu.isGlobalMuon(), mu.isTrackerMuon(), px, py, pz, muIndex});
   }
 
@@ -643,7 +676,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
 
           float sv_dphi = (vtxPos.x() * sv_px + vtxPos.y() * sv_py) / (lxy * sv_pt);
           float sv_3Dangle = (vtxPos.x() * sv_px + vtxPos.y() * sv_py + vtxPos.z() * sv_pz) / (L3D * sv_p);
-          float sv_ndof = fittedVertex.degreesOfFreedom();
+          int sv_ndof = fittedVertex.degreesOfFreedom();
 
 
           if (counter_NoVtx == 0){
@@ -705,7 +738,13 @@ void BDT_ntuplizer::beginJob() {
   tout->Branch("run", &run);
   tout->Branch("lumi", &lumi);
   tout->Branch("evtn", &evtn);
-  
+  tout->Branch("passTrigger", &passTrigger_);
+
+  // =================== Gen Variables ===================
+  tout->Branch("gen_pt", &gen_pt);
+  tout->Branch("gen_eta", &gen_eta);
+  tout->Branch("gen_phi", &gen_phi);
+
   // ===================== NoVtx SV =====================
   tout->Branch("SV1_chi2_NoVtx", &SV1_chi2_NoVtx);
   tout->Branch("SV1_prob_NoVtx", &SV1_prob_NoVtx);

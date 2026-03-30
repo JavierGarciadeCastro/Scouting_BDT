@@ -12,6 +12,7 @@ BDT_ntuplizer = cms.EDAnalyzer("BDT_ntuplizer",
     ScoutingmuonsVtx = cms.InputTag("hltScoutingMuonPackerVtx"),
     ScoutingmuonsNoVtx = cms.InputTag("hltScoutingMuonPackerNoVtx"),
     hltScoutingMuonPacker_displacedVtx = cms.InputTag("hltScoutingMuonPackerNoVtx","displacedVtx","HLT"),
+    genParticlesInputTag = cms.InputTag('prunedGenParticles', '', 'PAT'),
     triggerSelection = cms.vstring(SingleMuHLT + DoubleMuHLT),
     triggerConfiguration = cms.PSet(
         hltResults            = cms.InputTag('TriggerResults','','HLT'),

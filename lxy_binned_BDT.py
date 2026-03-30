@@ -18,28 +18,38 @@ root_output = Path("root_output")
 ctau = 100
 model = 'A'
 mA = 0.40
-if model == 'A' and mA == 0.40:
-    if ctau == 1:
-        filename_sig = 'signal_A_ctau_1mm_mA_0p40_mpi_4.root'
-    elif ctau == 10:
-        filename_sig = 'signal_A_ctau_10mm_mA_0p40_mpi_4.root'
-    elif ctau == 100:
-        filename_sig = 'signal_A_ctau_100mm_mA_0p40_mpi_4.root'
-elif model == 'A' and mA == 2:
-    if ctau == 1:
-        filename_sig = 'signal_A_ctau_1mm_mA_2p0_mpi_10.root'
-    elif ctau == 10:
-        filename_sig = 'signal_A_ctau_10mm_mA_2p0_mpi_10.root'
-    elif ctau == 100:
-        filename_sig = 'signal_A_ctau_100mm_mA_2p0_mpi_10.root'
-    
-if model == 'B':
-    if ctau == 1:
-        filename_sig = 'signal_B_1mm.root'
-    elif ctau == 10:
-        filename_sig = 'signal_B_10mm.root'
-    elif ctau == 100:
-        filename_sig = 'signal_B_100mm.root'
+apply_presel = False
+if not apply_presel:
+    if model == 'A' and mA == 0.40:
+        if ctau == 1:
+            filename_sig = 'signal_A_ctau_1mm_mA_0p40_mpi_4_noPreselection.root'
+        elif ctau == 10:
+            filename_sig = 'signal_A_ctau_10mm_mA_0p40_mpi_4_noPreselection.root'
+        elif ctau == 100:
+            filename_sig = 'signal_A_ctau_100mm_mA_0p40_mpi_4_noPreselection.root'
+else:
+    if model == 'A' and mA == 0.40:
+        if ctau == 1:
+            filename_sig = 'signal_A_ctau_1mm_mA_0p40_mpi_4.root'
+        elif ctau == 10:
+            filename_sig = 'signal_A_ctau_10mm_mA_0p40_mpi_4.root'
+        elif ctau == 100:
+            filename_sig = 'signal_A_ctau_100mm_mA_0p40_mpi_4.root'
+    elif model == 'A' and mA == 2:
+        if ctau == 1:
+            filename_sig = 'signal_A_ctau_1mm_mA_2p0_mpi_10.root'
+        elif ctau == 10:
+            filename_sig = 'signal_A_ctau_10mm_mA_2p0_mpi_10.root'
+        elif ctau == 100:
+            filename_sig = 'signal_A_ctau_100mm_mA_2p0_mpi_10.root'
+
+    if model == 'B':
+        if ctau == 1:
+            filename_sig = 'signal_B_1mm.root'
+        elif ctau == 10:
+            filename_sig = 'signal_B_10mm.root'
+        elif ctau == 100:
+            filename_sig = 'signal_B_100mm.root'
 
 print(filename_sig)
 
@@ -230,34 +240,63 @@ df_sig_OR    = build_OR_dataframe(df_sig_Vtx, df_sig_NoVtx)
 # ================= Load background =================
 print('Preparing background dataframe...')
 
-df_bkg_Vtx = pd.concat([
-    build_dataframe('QCD15to20.root',   0, 'Vtx'),
-    build_dataframe('QCD20to30.root',   0, 'Vtx'),
-    build_dataframe('QCD30to50.root',   0, 'Vtx'),
-    build_dataframe('QCD50to80.root',   0, 'Vtx'),
-    build_dataframe('QCD80to120.root',  0, 'Vtx'),
-    build_dataframe('QCD120to170.root', 0, 'Vtx'),
-    build_dataframe('QCD170to300.root', 0, 'Vtx'),
-    build_dataframe('QCD300to470.root', 0, 'Vtx'),
-    build_dataframe('QCD470to600.root', 0, 'Vtx'),
-    build_dataframe('QCD600to800.root', 0, 'Vtx'),
-    build_dataframe('QCD800to1000.root', 0, 'Vtx')
-], ignore_index=True)
+if not apply_presel:
+    df_bkg_Vtx = pd.concat([
+        build_dataframe('QCD15to20_noPreselection.root',   0, 'Vtx'),
+        build_dataframe('QCD20to30_noPreselection.root',   0, 'Vtx'),
+        build_dataframe('QCD30to50_noPreselection.root',   0, 'Vtx'),
+        build_dataframe('QCD50to80_noPreselection.root',   0, 'Vtx'),
+        build_dataframe('QCD80to120_noPreselection.root',  0, 'Vtx'),
+        build_dataframe('QCD120to170_noPreselection.root', 0, 'Vtx'),
+        build_dataframe('QCD170to300_noPreselection.root', 0, 'Vtx'),
+        build_dataframe('QCD300to470_noPreselection.root', 0, 'Vtx'),
+        build_dataframe('QCD470to600_noPreselection.root', 0, 'Vtx'),
+        build_dataframe('QCD600to800_noPreselection.root', 0, 'Vtx'),
+        build_dataframe('QCD800to1000_noPreselection.root', 0, 'Vtx')
+    ], ignore_index=True)
 
+    df_bkg_NoVtx = pd.concat([
+        build_dataframe('QCD15to20_noPreselection.root',   0, 'NoVtx'),
+        build_dataframe('QCD20to30_noPreselection.root',   0, 'NoVtx'),
+        build_dataframe('QCD30to50_noPreselection.root',   0, 'NoVtx'),
+        build_dataframe('QCD50to80_noPreselection.root',   0, 'NoVtx'),
+        build_dataframe('QCD80to120_noPreselection.root',  0, 'NoVtx'),
+        build_dataframe('QCD120to170_noPreselection.root', 0, 'NoVtx'),
+        build_dataframe('QCD170to300_noPreselection.root', 0, 'NoVtx'),
+        build_dataframe('QCD300to470_noPreselection.root', 0, 'NoVtx'),
+        build_dataframe('QCD470to600_noPreselection.root', 0, 'NoVtx'),
+        build_dataframe('QCD600to800_noPreselection.root', 0, 'NoVtx'),
+        build_dataframe('QCD800to1000_noPreselection.root', 0, 'NoVtx')
+    ], ignore_index=True)
 
-df_bkg_NoVtx = pd.concat([
-    build_dataframe('QCD15to20.root',   0, 'NoVtx'),
-    build_dataframe('QCD20to30.root',   0, 'NoVtx'),
-    build_dataframe('QCD30to50.root',   0, 'NoVtx'),
-    build_dataframe('QCD50to80.root',   0, 'NoVtx'),
-    build_dataframe('QCD80to120.root',  0, 'NoVtx'),
-    build_dataframe('QCD120to170.root', 0, 'NoVtx'),
-    build_dataframe('QCD170to300.root', 0, 'NoVtx'),
-    build_dataframe('QCD300to470.root', 0, 'NoVtx'),
-    build_dataframe('QCD470to600.root', 0, 'NoVtx'),
-    build_dataframe('QCD600to800.root', 0, 'NoVtx'),
-    build_dataframe('QCD800to1000.root', 0, 'NoVtx')
-], ignore_index=True)
+else: 
+    df_bkg_Vtx = pd.concat([
+        build_dataframe('QCD15to20.root',   0, 'Vtx'),
+        build_dataframe('QCD20to30.root',   0, 'Vtx'),
+        build_dataframe('QCD30to50.root',   0, 'Vtx'),
+        build_dataframe('QCD50to80.root',   0, 'Vtx'),
+        build_dataframe('QCD80to120.root',  0, 'Vtx'),
+        build_dataframe('QCD120to170.root', 0, 'Vtx'),
+        build_dataframe('QCD170to300.root', 0, 'Vtx'),
+        build_dataframe('QCD300to470.root', 0, 'Vtx'),
+        build_dataframe('QCD470to600.root', 0, 'Vtx'),
+        build_dataframe('QCD600to800.root', 0, 'Vtx'),
+        build_dataframe('QCD800to1000.root', 0, 'Vtx')
+    ], ignore_index=True)
+
+    df_bkg_NoVtx = pd.concat([
+        build_dataframe('QCD15to20.root',   0, 'NoVtx'),
+        build_dataframe('QCD20to30.root',   0, 'NoVtx'),
+        build_dataframe('QCD30to50.root',   0, 'NoVtx'),
+        build_dataframe('QCD50to80.root',   0, 'NoVtx'),
+        build_dataframe('QCD80to120.root',  0, 'NoVtx'),
+        build_dataframe('QCD120to170.root', 0, 'NoVtx'),
+        build_dataframe('QCD170to300.root', 0, 'NoVtx'),
+        build_dataframe('QCD300to470.root', 0, 'NoVtx'),
+        build_dataframe('QCD470to600.root', 0, 'NoVtx'),
+        build_dataframe('QCD600to800.root', 0, 'NoVtx'),
+        build_dataframe('QCD800to1000.root', 0, 'NoVtx')
+    ], ignore_index=True)
 
 df_bkg_OR = build_OR_dataframe(df_bkg_Vtx, df_bkg_NoVtx)
 
@@ -290,9 +329,18 @@ for bin_label in lxy_labels:
     df_bin_NoVtx = df_NoVtx[df_NoVtx["lxy_bin"] == bin_label].copy()
     df_bin_OR = df_OR[df_OR["lxy_bin"] == bin_label].copy()
 
-    print("Vtx events: ", len(df_bin_Vtx))
-    print("NoVtx events: ", len(df_bin_NoVtx))
-    print("OR events: ", len(df_bin_OR))
+    n_sig_Vtx = np.sum(df_bin_Vtx["label"] == 1)
+    n_bkg_Vtx = np.sum(df_bin_Vtx["label"] == 0)
+
+    n_sig_NoVtx = np.sum(df_bin_NoVtx["label"] == 1)
+    n_bkg_NoVtx = np.sum(df_bin_NoVtx["label"] == 0)
+
+    n_sig_OR = np.sum(df_bin_OR["label"] == 1)
+    n_bkg_OR = np.sum(df_bin_OR["label"] == 0)
+
+    print(f"Vtx:   total={len(df_bin_Vtx)}, sig={n_sig_Vtx}, bkg={n_bkg_Vtx}")
+    print(f"NoVtx: total={len(df_bin_NoVtx)}, sig={n_sig_NoVtx}, bkg={n_bkg_NoVtx}")
+    print(f"OR:    total={len(df_bin_OR)}, sig={n_sig_OR}, bkg={n_bkg_OR}")
     if len(df_bin_Vtx) < 100 or len(df_bin_NoVtx) < 100:
         print("Not enough events, skipping")
         continue
@@ -329,7 +377,7 @@ for bin_label in lxy_labels:
 
     # ================= ROC =================
 
-    os.makedirs(f'curves_comp_{model}', exist_ok=True)
+    os.makedirs(f'curves_comp_{model}_noPresel', exist_ok=True)
 
     fpr_Vtx, tpr_Vtx, _ = roc_curve(y_test_Vtx, y_pred_prob_Vtx)
     fpr_NoVtx, tpr_NoVtx, _ = roc_curve(y_test_NoVtx, y_pred_prob_NoVtx)
@@ -352,7 +400,7 @@ for bin_label in lxy_labels:
     ax.set_title(f"ROC Curve (ctau = {ctau}mm, Lxy = {bin_label})")
     ax.legend(loc="lower right")
 
-    fig.savefig(f'curves_comp_{model}/ROC_ctau_{ctau}_lxy_{bin_label}.png', dpi=150, bbox_inches="tight")
+    fig.savefig(f'curves_comp_{model}_noPresel/ROC_ctau_{ctau}_lxy_{bin_label}.png', dpi=150, bbox_inches="tight")
     plt.close(fig)
 
     for tag, bdt, X_bin in [("Vtx", bdt_Vtx, X_Vtx_bin), ("NoVtx", bdt_NoVtx, X_NoVtx_bin), ("OR", bdt_OR, X_OR_bin)]:
@@ -365,5 +413,5 @@ for bin_label in lxy_labels:
         ax.set_ylabel("Variable")
         ax.set_title(f"Feature Importance {tag} (ctau={ctau}mm, Lxy={bin_label})")
         ax.tick_params(axis='y', labelsize=8)
-        fig.savefig(f'curves_comp_{model}/FeatImp_{tag}_ctau_{ctau}_lxy_{bin_label}.png', dpi=150, bbox_inches="tight")
+        fig.savefig(f'curves_comp_{model}_noPresel/FeatImp_{tag}_ctau_{ctau}_lxy_{bin_label}.png', dpi=150, bbox_inches="tight")
         plt.close(fig)
