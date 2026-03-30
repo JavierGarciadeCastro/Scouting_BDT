@@ -174,7 +174,7 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
     float pz;
     int mu_index;
   };
-
+  /*
   l1GtUtils_->retrieveL1(iEvent, iSetup, algToken_);
 
   bool passL1 = false;
@@ -208,6 +208,8 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
   }
   if (!passL1) return;
   if (!passHLT) return;
+
+  */
 
   std::vector<TaggedTT> allTracksTT_NoVtx;
   std::vector<TaggedTT> allTracksTT_Vtx;
@@ -688,9 +690,9 @@ void BDT_ntuplizer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSe
       }
     }
   }
-  if (!SV1_lxy_Vtx.empty() || !SV1_lxy_NoVtx.empty()) {
+  //if (!SV1_lxy_Vtx.empty() || !SV1_lxy_NoVtx.empty()) {
     tout->Fill();
-  }
+  //}
 }
 
 
